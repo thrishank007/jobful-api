@@ -23,4 +23,22 @@ router.post('/login', [
 // Refresh Token
 router.post('/refresh-token', authController.refreshToken);
 
+// Forgot Password
+router.post('/forgot-password', [
+  body('email').isEmail().withMessage('Please enter a valid email address')
+], authController.forgotPassword);
+
+// Reset Password
+router.patch('/reset-password', [
+  body('email').isEmail().withMessage('Please enter a valid email address'),
+  body('code').isNumeric().isLength({ min: 6, max: 6 }).withMessage('Verification code must be a 6-digit number'),
+  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long'),
+  body('passwordConfirm').custom((value, { req }) => {
+    if (value !== req.body.newPassword) {
+      throw new Error('Passwords do not match');
+    }
+    return true;
+  })
+], authController.resetPassword);
+
 module.exports = router;

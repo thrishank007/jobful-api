@@ -111,7 +111,6 @@ A RESTful API for fetching the latest job notifications (India only) from variou
 
   ```json
   {
-    "username": "testuser",
     "email": "testuser@example.com",
     "password": "password123",
     "fullName": "Test User",
@@ -129,7 +128,6 @@ A RESTful API for fetching the latest job notifications (India only) from variou
     "accessToken": "YOUR_ACCESS_TOKEN",
     "user": {
       "id": "USER_ID",
-      "username": "testuser",
       "email": "testuser@example.com",
       "fullName": "Test User",
       "dob": "1990-01-01T00:00:00.000Z",
@@ -160,7 +158,6 @@ A RESTful API for fetching the latest job notifications (India only) from variou
     "accessToken": "YOUR_ACCESS_TOKEN",
     "user": {
       "id": "USER_ID",
-      "username": "testuser",
       "email": "testuser@example.com",
       "fullName": "Test User",
       "dob": "1990-01-01T00:00:00.000Z",
@@ -174,10 +171,10 @@ A RESTful API for fetching the latest job notifications (India only) from variou
 
   **POST** `/auth/refresh-token`
 
-  **Cookies:**
+  **Headers:**
 
   ```
-  Cookie: refreshToken=YOUR_REFRESH_TOKEN
+  refreshToken: YOUR_REFRESH_TOKEN
   ```
 
   **Response:**
@@ -245,7 +242,6 @@ GET /freejobalert/v1/bank-jobs?page=3&limit=5
   curl -X POST http://localhost:3000/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "testuser",
     "email": "testuser@example.com",
     "password": "password123",
     "fullName": "Test User",
@@ -282,7 +278,6 @@ GET /freejobalert/v1/bank-jobs?page=3&limit=5
 
      ```json
      {
-       "username": "testuser",
        "email": "testuser@example.com",
        "password": "password123",
        "fullName": "Test User",
