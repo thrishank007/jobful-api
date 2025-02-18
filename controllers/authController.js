@@ -157,6 +157,44 @@ exports.refreshToken = async (req, res, next) => {
   }
 };
 
+
+// Get User Data
+exports.getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+// Update User Data
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { fullName, email, dob, interests, profilePic } = req.body;
+
+    const updatedUser = await User.findOneAndUpdate(
+      { email: req.user.email }, 
+      { $set: { fullName, email, dob, interests, profilePic } },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success:false, message: 'User not found' });
+    }
+
+    res.json({ success:true, user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ success:false, message: 'Server error', error });
+  }
+};
+
+
 exports.forgotPassword = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -193,28 +231,28 @@ exports.forgotPassword = async (req, res, next) => {
   }
 };
 
-// helper func to validate the code 
-verifyPasswordResetCode = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+// // helper func to validate the code 
+// verifyPasswordResetCode = async (req, res, next) => {
+//   const errors = validationResult(req);
+//   if (!errors.isEmpty()) {
+//     return res.status(400).json({ errors: errors.array() });
+//   }
 
-  try {
-    const { email, code } = req.body;
-    const user = await User.findOne({
-      email,
-      passwordResetCode: code,
-      passwordResetExpires: { $gt: Date.now() },
-    });
-    if (!user) {
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.log(error);
-  }
-};
+//   try {
+//     const { email, code } = req.body;
+//     const user = await User.findOne({
+//       email,
+//       passwordResetCode: code,
+//       passwordResetExpires: { $gt: Date.now() },
+//     });
+//     if (!user) {
+//       return false;
+//     }
+//     return true;
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
 
 exports.resetPassword = async (req, res, next) => {
   const errors = validationResult(req);

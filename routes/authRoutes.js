@@ -41,4 +41,8 @@ router.patch('/reset-password', [
   })
 ], authController.resetPassword);
 
+// router.get('/profile', [
+//   body('email').isEmail
+// ], authController.getUserProfile);
+
 module.exports = router;
