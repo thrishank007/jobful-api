@@ -21,9 +21,7 @@
     "nodeJs",
     "expressJS"
   ],
-  "author": [
-    "thrishank007"
-  ],
+  "author": "thrishank007",
   "license": "MIT",
   "dependencies": {
     "apicache": "^1.6.3",

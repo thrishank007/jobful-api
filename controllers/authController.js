@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const mongoose = require('mongoose');
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const {sendResetEmail} = require("../utils/email");
@@ -78,6 +79,7 @@ exports.register = async (req, res, next) => {
       },
     });
   } catch (error) {
+    log.error(error);
     next(error);
   }
 };
@@ -122,6 +124,7 @@ exports.login = async (req, res, next) => {
       },
     });
   } catch (error) {
+    log.error(error)
     next(error);
   }
 };
@@ -157,40 +160,65 @@ exports.refreshToken = async (req, res, next) => {
   }
 };
 
-
-// Get User Data
 exports.getUserProfile = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.user.email });
+    const { userId } = req.query;
 
-    if (!user) {
-      return res.status(404).json({ success:false, message: 'User not found' });
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, message: 'Invalid user ID' });
     }
 
-    res.json({success:true, user});
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const { password, refreshToken, passwordResetCode, passwordResetExpires, ...safeUserData } = user.toObject();
+
+    res.json({ success: true, user: safeUserData });
   } catch (error) {
-    res.status(500).json({ success:false, message: 'Server error', error });
+    log.error(error)
+    res.status(500).json({ success: false, message: 'Server error', error });
   }
 };
 
-// Update User Data
 exports.updateUserProfile = async (req, res) => {
   try {
-    const { fullName, email, dob, interests, profilePic } = req.body;
+    const { userId } = req.query;
+    const { fullName, email, dob, interests, phoneNumber, profilePic } = req.body;
 
-    const updatedUser = await User.findOneAndUpdate(
-      { email: req.user.email }, 
-      { $set: { fullName, email, dob, interests, profilePic } },
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, message: 'Invalid user ID' });
+    }
+
+    if (email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser && existingUser._id.toString() !== userId) {
+        return res.status(409).json({ success: false, message: 'Email already exists' });
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { fullName, email, dob, interests, phoneNumber, profilePic } },
       { new: true, runValidators: true }
     );
 
     if (!updatedUser) {
-      return res.status(404).json({ success:false, message: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.json({ success:true, updatedUser });
+    const { password, refreshToken, passwordResetCode, passwordResetExpires, ...safeUserData } = updatedUser.toObject();
+
+    res.json({ success: true, user: safeUserData });
   } catch (error) {
-    res.status(500).json({ success:false, message: 'Server error', error });
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(409).json({ success: false, message: `${field} already exists` });
+    }
+    log.error(error)
+    res.status(500).json({ success: false, message: 'Server error', error });
   }
 };
 
@@ -227,6 +255,7 @@ exports.forgotPassword = async (req, res, next) => {
       });
     }
   } catch (error) {
+    log.error(error)
     next(error);
   }
 };
@@ -288,6 +317,7 @@ exports.resetPassword = async (req, res, next) => {
       },
     });
   } catch (error) {
+    log.error(error)
     next(error);
   }
 };
