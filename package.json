@@ -4,7 +4,7 @@
   "description": "A RESTful API to fetch latest job notifications (India only) from various sources.",
   "main": "index.js",
   "scripts": {
-    "devrun": "nodemon index.js",
+    "devrun": "nodemon",
     "start": "node index.js"
   },
   "repository": {

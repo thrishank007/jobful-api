@@ -164,12 +164,12 @@ exports.getUserProfile = async (req, res) => {
     const user = await User.findOne({ email: req.user.email });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ success:false, message: 'User not found' });
     }
 
-    res.json(user);
+    res.json({success:true, user});
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ success:false, message: 'Server error', error });
   }
 };
 
@@ -188,7 +188,7 @@ exports.updateUserProfile = async (req, res) => {
       return res.status(404).json({ success:false, message: 'User not found' });
     }
 
-    res.json({ success:true, user: updatedUser });
+    res.json({ success:true, updatedUser });
   } catch (error) {
     res.status(500).json({ success:false, message: 'Server error', error });
   }
@@ -214,7 +214,7 @@ exports.forgotPassword = async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     try {
-      const resp = await sendResetEmail(email, resetCode);
+      const resp = await sendResetEmail(email, resetCode, user.fullName);
       res.status(200).json(resp);
     } catch (error) {
       log.error("Error sending email:", error);
@@ -230,29 +230,6 @@ exports.forgotPassword = async (req, res, next) => {
     next(error);
   }
 };
-
-// // helper func to validate the code 
-// verifyPasswordResetCode = async (req, res, next) => {
-//   const errors = validationResult(req);
-//   if (!errors.isEmpty()) {
-//     return res.status(400).json({ errors: errors.array() });
-//   }
-
-//   try {
-//     const { email, code } = req.body;
-//     const user = await User.findOne({
-//       email,
-//       passwordResetCode: code,
-//       passwordResetExpires: { $gt: Date.now() },
-//     });
-//     if (!user) {
-//       return false;
-//     }
-//     return true;
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
 
 exports.resetPassword = async (req, res, next) => {
   const errors = validationResult(req);

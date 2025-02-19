@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendResetEmail = async (toEmail, resetCode) => {
+const sendResetEmail = async (toEmail, resetCode, fullName) => {
   const mailOptions = {
     from: `"Notify Support" <${process.env.EMAIL_FROM}>`,
     to: toEmail,
@@ -83,7 +83,7 @@ const sendResetEmail = async (toEmail, resetCode) => {
   <div class="container">
     <div class="header">Password Reset OTP</div>
     <div class="content">
-      <p>Dear [User Name],</p>
+      <p>Dear ${fullName},</p>
       <p>We received a request to reset your password for your Notify account.</p>
       <p>Please use the following One-Time Password (OTP) to reset your password:</p>
       <div class="otp-box"><span>${resetCode}</span></div>
