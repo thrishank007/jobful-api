@@ -45,7 +45,7 @@ router.get('/profile', [
   body('email').isEmail().withMessage('Please enter a valid email address')
 ], authController.getUserProfile);
 
-router.update('/updateProfile', [
+router.patch('/updateProfile', [
   body('email').isEmail().withMessage('Please enter a valid email')
 ], authController.updateUserProfile);
 
