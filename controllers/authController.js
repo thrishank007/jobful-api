@@ -274,7 +274,7 @@ exports.resetPassword = async (req, res, next) => {
       passwordResetExpires: { $gt: Date.now() },
     });
 
-    if (!user || !verifyPasswordResetCode(email,code)) {
+    if (!user) {
       return res.status(400).json({
         success: false,
         message: "Verification code is invalid or has expired",
