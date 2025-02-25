@@ -3,7 +3,6 @@ const router = express.Router();
 const signale = require('signale');
 const { latestNotifications, topicScraper, smartScraper, educationNotifications } = require('../customModules/freejobalerts/scraper');
 const stateCodes = require('../data/freeJobAlertStateMap.json');
-const { protect } = require('../middleware/authMiddleware');
 
 const log = signale.scope('freejobalert:global');
 

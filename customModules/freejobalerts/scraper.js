@@ -354,7 +354,7 @@ detailResponses.forEach((response, idx) => {
     importantLinksTable.find('tr').each((_, tr) => {
       const linkText = $(tr).find('td').first().text().trim();
       const linkHref = $(tr).find('a').attr('href') || '';
-      if (!['Download Mobile App', 'Join Telegram Channel', 'Join WhatsApp Channel', 'Join Whatsapp Channel'].includes(linkText)) {
+      if (!['Download Mobile App', 'Join Telegram Channel', 'Join WhatsApp Channel', 'Join Whatsapp Channel', 'Join Whats App Channel'].includes(linkText)) {
         notification.importantLinks[linkText] = linkHref;
       }
     });

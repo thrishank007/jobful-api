@@ -41,7 +41,7 @@ app.get('/', (req, res) => {
 
 app.use('/auth', authRoutes);
 
-app.use('/freejobalert/v1', protect, cache('5 minutes') , freejobalert);
+app.use('/freejobalert/v1', protect, cache('10 minutes') , freejobalert);
 
 // Centralized Error Handling
 app.use((err, req, res, next) => {
