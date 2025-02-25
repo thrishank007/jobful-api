@@ -38,6 +38,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
     "nodemailer": "^6.10.0",
+    "p-limit": "^6.2.0",
     "signale": "^1.4.0"
   },
   "devDependencies": {
