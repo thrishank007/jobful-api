@@ -1,4 +1,3 @@
-const { application } = require("express");
 const mongoose = require("mongoose");
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 
