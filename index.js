@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const freejobalert = require('./routes/freejobRoutes');
 const authRoutes = require('./routes/authRoutes');
+require('./cron/jobScheduler');
 
 const app = express();
 dotenv.config();
