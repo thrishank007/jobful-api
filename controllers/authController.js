@@ -2,7 +2,7 @@ const User = require("../models/User");
 const mongoose = require('mongoose');
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
-const {sendResetEmail} = require("../utils/email");
+const { mailService } = require("../services/mailService");
 const signale = require("signale");
 
 const log = signale.scope("auth:controller");
@@ -242,7 +242,7 @@ exports.forgotPassword = async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     try {
-      const resp = await sendResetEmail(email, resetCode, user.fullName);
+      const resp = await mailService.sendResetEmail(email, resetCode, user.fullName);
       res.status(200).json(resp);
     } catch (error) {
       log.error("Error sending email:", error);

@@ -2,6 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const signale = require('signale');
 const log = signale.scope('scraper:global');
+const dataManager = require('./dataManager');
 
 function getRandomUserAgent() {
   const userAgents = [
@@ -113,7 +114,10 @@ data.sort((a, b) => {
   const dateB = new Date(yearB, monthB - 1, dayB);
   return dateB - dateA; 
 });
-return { success: true, data, total: data.length };
+const result = { success: true, data, total: data.length };
+  
+await dataManager.saveToJson('topicScraper', result, topic);
+return result;
   } catch (error) {
     log.error('Could not fetch the source', error);
     return { success: false, error: error.message };
@@ -205,11 +209,14 @@ allNotifications.sort((a, b) => {
   const dateB = new Date(yearB, monthB - 1, dayB);
   return dateB - dateA;
 });
-return {
+const result = {
   success: true,
   data: allNotifications,
   total: allNotifications.length
 };
+  
+await dataManager.saveToJson('latestNotifications', result);
+return result;
   } catch (error) {
     log.error('Failed to fetch notifications:', error.message);
     return {
@@ -274,7 +281,10 @@ data.sort((a, b) => {
   const dateB = new Date(yearB, monthB - 1, dayB);
   return dateB - dateA;
 });
-return { success: true, data, total: data.length };
+const result = { success: true, data, total: data.length };
+  
+await dataManager.saveToJson('smartScraper', result);
+return result;
   } catch (error) {
     log.error('Could not fetch the source', error);
     return { success: false, error: error.message };
@@ -404,11 +414,14 @@ notifications.sort((a, b) => {
 });
 
 // Step 7: Return the collected notifications
-return {
+const result = {
   success: true,
   data: notifications,
   total: notifications.length
 };
+  
+await dataManager.saveToJson('educationNotifications', result);
+return result;
   } catch (error) {
     log.error('Failed to fetch education notifications:', error.message);
     return {
