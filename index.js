@@ -3,14 +3,20 @@ const signale = require('signale');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
+const apicache = require('apicache');
+const cache = apicache.middleware;
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const freejobalert = require('./routes/freejobRoutes');
 const authRoutes = require('./routes/authRoutes');
-require('./cron/jobScheduler');
+const { protect } = require('./middleware/authMiddleware');
 
 const app = express();
 dotenv.config();
+apicache.options({
+  statusCodes: { include: [200, 201] }, // Only cache successful responses
+});
+
 
 const log = signale.scope('server:global');
 
@@ -19,6 +25,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => log.success('Connected to Mon
   .catch(err => log.error('MongoDB connection error:', err));
 
 // Security Middleware
+app.set('trust proxy', 1); // Trust first proxy for rate limiting when deployed behind a reverse proxy
 app.use(helmet());
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -35,7 +42,7 @@ app.get('/', (req, res) => {
 
 app.use('/auth', authRoutes);
 
-app.use('/freejobalert/v1', freejobalert);
+app.use('/freejobalert/v1', protect, cache('10 minutes') , freejobalert);
 
 // Centralized Error Handling
 app.use((err, req, res, next) => {
