@@ -67,6 +67,11 @@ A RESTful API for fetching the latest job notifications (India only) from variou
    JWT_ACCESS_EXPIRES_IN=15m
    JWT_REFRESH_EXPIRES_IN=7d
    MONGO_URI=mongodb://localhost:27017/jobful-api
+   SMTP_HOST=YOUR_SMTP_HOST
+   SMTP_PORT=YOUR_SMTP_PORT
+   SMTP_USER=YOUR_SMTP_USER
+   SMTP_PASS=YOUR_SMTP_PASS
+   EMAIL_FROM=YOUR_SENDER_MAIL
    ```
 
 4. **Start the server:**
@@ -307,6 +312,7 @@ GET /freejobalert/v1/bank-jobs?page=3&limit=5
 - **Port**: The server runs on the port specified in the `.env` file (`PORT=3000` by default).
 - **JWT Secrets**: Configure `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` in the `.env` file.
 - **MongoDB URI**: Set `MONGO_URI` in the `.env` file.
+- **SMTP Info**: Configure details of smtp for sending mails
 
 ---
 
@@ -318,6 +324,11 @@ GET /freejobalert/v1/bank-jobs?page=3&limit=5
 - `JWT_ACCESS_EXPIRES_IN`: Expiry time for access tokens (e.g., `15m` for 15 minutes).
 - `JWT_REFRESH_EXPIRES_IN`: Expiry time for refresh tokens (e.g., `7d` for 7 days).
 - `MONGO_URI`: MongoDB connection URI.
+- `SMTP_HOST: SMTP host for email service
+-  SMTP_PORT: MTP port (e.g., 587 or 465)
+-  SMTP_USER: SMTP login username
+-  SMTP_PASS: SMTP login password
+-  EMAIL_FROM: Email appears in 'From' address
 
 ---
 
