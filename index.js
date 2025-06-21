@@ -25,6 +25,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => log.success('Connected to Mon
   .catch(err => log.error('MongoDB connection error:', err));
 
 // Security Middleware
+app.set('trust proxy', 1); // Trust first proxy for rate limiting when deployed behind a reverse proxy
 app.use(helmet());
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
