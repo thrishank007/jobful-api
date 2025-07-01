@@ -22,7 +22,7 @@ router.get('/teaching-jobs', asyncHandler(allIndiaTeachingJobs));
 router.get('/engineering-jobs', asyncHandler(allIndiaEngineeringJobs));
 router.get('/railway-jobs', asyncHandler(allIndiaRailwayJobs));
 router.get('/defence-jobs', asyncHandler(allIndiaDefenceJobs));
-router.get('/latest-edu', asyncHandler(latestEdu));
+//router.get('/latest-edu', asyncHandler(latestEdu));
 // Invalid URL
 router.all('*', notFound);
 
