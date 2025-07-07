@@ -2,6 +2,8 @@ const fs = require('fs/promises');
 const path = require('path');
 const { mailService } = require('../../services/mailService');
 const User = require('../../models/User');
+const { getLatestJobForCategory, updateJobTracking } = require('../../db/sqlite');
+const notificationService = require('../../services/notificationService');
 
 class DataManager {
   constructor() {
@@ -13,20 +15,8 @@ class DataManager {
   }
 
   async saveToJson(functionName, data, topic = null) {
-    await this.ensureDataDir();
-    
-    // Save function output
-    const filename = topic ? 
-      `topic_${topic}.json` : 
-      `${functionName}.json`;
-    
-    await fs.writeFile(
-      path.join(this.dataDir, filename),
-      JSON.stringify(data, null, 2)
-    );
-
-    // Handle first job persistence and notifications
-    await this.handleJobUpdates(data);
+    // Disabled: do not write any JSON files
+    return;
   }
 
   async handleJobUpdates(newData) {
@@ -108,6 +98,47 @@ _Updated at: ${timestamp}_
     for (const email of emailList) {
       await mailService.sendJobNotification(email, emailBody);
     }
+  }
+
+  async checkForNewJobs(category, scrapedData) {
+    if (!scrapedData.success || !scrapedData.data || !scrapedData.data.length) {
+      return;
+    }
+
+    const latestJob = scrapedData.data[0]; // First job is latest (sorted by date)
+    const trackedJob = await getLatestJobForCategory(category);
+
+    if (!trackedJob) {
+      // First time tracking this category
+      await updateJobTracking(category, latestJob);
+      return;
+    }
+
+    // Check if there's a new job
+    const currentJobId = `${latestJob.postBoard}-${latestJob.postName}-${latestJob.advtNo}`;
+    const hasNewJob = trackedJob.latest_job_id !== currentJobId;
+
+    if (hasNewJob) {
+      // Find new jobs (jobs that weren't in the previous scrape)
+      const newJobs = this.findNewJobs(scrapedData.data, trackedJob);
+      
+      // Send notifications
+      await notificationService.sendJobNotifications(category, newJobs);
+      
+      // Update tracking
+      await updateJobTracking(category, latestJob);
+    }
+  }
+
+  findNewJobs(allJobs, trackedJob) {
+    // Since jobs are sorted by date (newest first), 
+    // find jobs that are newer than the tracked job date
+    const trackedDate = new Date(trackedJob.latest_job_date.split('/').reverse().join('-'));
+    
+    return allJobs.filter(job => {
+      const jobDate = new Date(job.postDate.split('/').reverse().join('-'));
+      return jobDate >= trackedDate;
+    });
   }
 }
 

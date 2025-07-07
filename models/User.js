@@ -33,6 +33,20 @@ const userSchema = new mongoose.Schema({
     type: [String],
     default: []
   },
+  fcmTokens: {
+    type: [String],
+    default: []
+  },
+  notificationSettings: {
+    email: {
+      type: Boolean,
+      default: true
+    },
+    push: {
+      type: Boolean,
+      default: true
+    }
+  },
   profilePic: {
     type: String,
     default: ''

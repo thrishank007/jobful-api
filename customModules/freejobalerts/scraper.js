@@ -1,8 +1,68 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const signale = require('signale');
+const { URL } = require('url');
 const log = signale.scope('scraper:global');
 const dataManager = require('./dataManager');
+
+// Allowed domains for scraping to prevent SSRF
+const ALLOWED_DOMAINS = [
+  'freejobalert.com',
+  'www.freejobalert.com'
+];
+
+// Private IP ranges to block
+const PRIVATE_IP_RANGES = [
+  /^127\./, // 127.0.0.0/8
+  /^192\.168\./, // 192.168.0.0/16
+  /^10\./, // 10.0.0.0/8
+  /^172\.(1[6-9]|2[0-9]|3[01])\./, // 172.16.0.0/12
+  /^0\./, // 0.0.0.0/8
+  /^169\.254\./, // 169.254.0.0/16
+  /^224\./, // 224.0.0.0/4
+  /^::1$/, // IPv6 loopback
+  /^fc00::/, // IPv6 private
+  /^fe80::/ // IPv6 link-local
+];
+
+function validateUrl(url) {
+  try {
+    const parsedUrl = new URL(url);
+    
+    // Check protocol
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new Error('Invalid protocol. Only HTTP and HTTPS are allowed.');
+    }
+    
+    // Check domain
+    if (!ALLOWED_DOMAINS.includes(parsedUrl.hostname)) {
+      throw new Error(`Domain ${parsedUrl.hostname} is not allowed`);
+    }
+    
+    // Check for private IP addresses
+    for (const range of PRIVATE_IP_RANGES) {
+      if (range.test(parsedUrl.hostname)) {
+        throw new Error('Private IP addresses are not allowed');
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    log.error('URL validation failed:', error.message);
+    throw error;
+  }
+}
+
+function sanitizeContent(content) {
+  if (typeof content !== 'string') return content;
+  
+  return content
+    .replace(/<script[^>]*>.*?<\/script>/gis, '') // Remove script tags
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    .trim();
+}
 
 function getRandomUserAgent() {
   const userAgents = [
@@ -10,44 +70,59 @@ function getRandomUserAgent() {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15",
-// Mobile Browsers
-"Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Mobile Safari/537.36",
-"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
+    // Mobile Browsers
+    "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Mobile Safari/537.36",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 15_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
   ];
   const randomIndex = Math.floor(Math.random() * userAgents.length);
   return userAgents[randomIndex];
 }
 
 const axiosInstance = axios.create({
-  headers: { 'User-Agent': getRandomUserAgent()},
-  timeout: 10000,
+  headers: { 'User-Agent': getRandomUserAgent() },
+  timeout: 15000, // Increased timeout
+  maxRedirects: 5, // Limit redirects
+  maxContentLength: 10 * 1024 * 1024, // 10MB max response size
+  validateStatus: (status) => status < 500, // Don't throw on 4xx errors
   httpAgent: new (require('http')).Agent({ keepAlive: true }),
-  //httpsAgent: new (require('https')).Agent({ keepAlive: true })
+  httpsAgent: new (require('https')).Agent({ keepAlive: true })
 });
 
 
 async function extractAdditionalLinks(detailPageUrl) {
-    try {
-      const response = await axiosInstance.get(detailPageUrl);
-      const $ = cheerio.load(response.data);
-  const links = {
-    apply_online: '',
-    notification: '',
-    official_website: ''
-  };
+  try {
+    // Validate URL before making request
+    validateUrl(detailPageUrl);
+    
+    const response = await axiosInstance.get(detailPageUrl);
+    
+    if (response.status !== 200) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const $ = cheerio.load(response.data);
+    const links = {
+      apply_online: '',
+      notification: '',
+      official_website: ''
+    };
 
-  const relevantRows = $('tr').has('a');
+    const relevantRows = $('tr').has('a');
 
-  for (const element of relevantRows) {
-    const text = $(element).find('td').first().text().trim();
-    const href = $(element).find('a').attr('href');
-    if (!href) continue;
+    for (const element of relevantRows) {
+      const text = $(element).find('td').first().text().trim();
+      const href = $(element).find('a').attr('href');
+      if (!href) continue;
 
-    if (text.includes('Apply Online') && !links.apply_online) {
-      links.apply_online = href;
-    } else if (text.includes('Notification') && !links.notification) {
-      links.notification = href;
-    } else if (text.includes('Official Website') && !links.official_website) {
+      // Sanitize the link text and href
+      const sanitizedText = sanitizeContent(text);
+      const sanitizedHref = sanitizeContent(href);
+
+      if (sanitizedText.includes('Apply Online') && !links.apply_online) {
+        links.apply_online = sanitizedHref;
+      } else if (sanitizedText.includes('Notification') && !links.notification) {
+        links.notification = sanitizedHref;
+      } else if (sanitizedText.includes('Official Website') && !links.official_website) {
       links.official_website = href;
     }
 

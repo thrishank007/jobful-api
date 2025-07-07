@@ -1,2 +1,7 @@
 /node_modules
 .env
+security-audit-report.json
+/logs
+.DS_Store
+*.log
+*.md
