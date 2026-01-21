@@ -305,7 +305,7 @@ const notificationReferences = [];
 function cleanText(text) {
   return text
     .replace(/\t/g, ' ')    // Replace all whitespace (tabs, newlines, etc.) with a single space
-    .replace(/ /g, ' ')      // Replace non-breaking spaces
+    .replace(/\u00A0/g, ' ') // Replace non-breaking spaces with regular spaces
     .trim()
     .split('\n')
     .filter(item => item && item.trim() !== "")
