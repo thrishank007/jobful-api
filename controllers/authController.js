@@ -27,9 +27,15 @@ exports.register = async (req, res, next) => {
 
   try {
     const { email, password, fullName, dob, phoneNumber, interests } = req.body;
-    const existingUser = await User.findOne({ email });
+
+    // Ensure email and phoneNumber are treated as literal string values in queries
+    const safeEmail = typeof email === "string" ? email : String(email);
+    const safePhoneNumber =
+      typeof phoneNumber === "string" ? phoneNumber : String(phoneNumber);
+
+    const existingUser = await User.findOne({ email: { $eq: safeEmail } });
     // Check if user with the same email already exists
-    const existingUserByEmail = await User.findOne({ email });
+    const existingUserByEmail = await User.findOne({ email: { $eq: safeEmail } });
     if (existingUserByEmail) {
       return res.status(400).json({
         success: false,
@@ -38,7 +44,9 @@ exports.register = async (req, res, next) => {
     }
 
     // Check if user with the same phone number already exists
-    const existingUserByPhoneNumber = await User.findOne({ phoneNumber });
+    const existingUserByPhoneNumber = await User.findOne({
+      phoneNumber: { $eq: safePhoneNumber },
+    });
     if (existingUserByPhoneNumber) {
       return res.status(400).json({
         success: false,
@@ -47,11 +55,11 @@ exports.register = async (req, res, next) => {
     }
 
     const newUser = await User.create({
-      email,
+      email: safeEmail,
       password,
       fullName,
       dob,
-      phoneNumber,
+      phoneNumber: safePhoneNumber,
       interests,
     });
     const accessToken = signAccessToken(newUser._id);
